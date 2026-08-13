@@ -1,20 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Column } from './components/Column';
-import { initialTasks } from './model/initialTasks';
 import type { Task } from './model/Task';
 import { TASK_STATUSES, type TaskStatus } from './model/TaskStatus';
+import { taskService } from './services/taskService';
 import './App.css';
-
-const API_DELAY_IN_MS = 1200;
 
 const COLUMN_STYLES: Record<TaskStatus, 'todo' | 'doing' | 'done'> = {
   'A Fazer': 'todo',
   'Em Progresso': 'doing',
   'Concluídas': 'done',
 };
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 
 export const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -29,14 +24,15 @@ export const App = () => {
         setLoading(true);
         setError(null);
 
-        // Simula o tempo de resposta do "GET /tasks" do backend em Go.
-        await sleep(API_DELAY_IN_MS);
-
         if (!isMounted) {
           return;
         }
 
-        setTasks(initialTasks);
+        const apiTasks = await taskService.getAll();
+
+        if (isMounted) {
+          setTasks(apiTasks);
+        }
       } catch {
         if (isMounted) {
           setError('Erro ao carregar tarefas.');
@@ -65,17 +61,88 @@ export const App = () => {
   );
 
   const handleEditTask = useCallback((task: Task) => {
-    console.log('Editar tarefa:', task);
+    const editedTitle = window.prompt('Novo titulo da tarefa:', task.title);
+
+    if (!editedTitle || editedTitle.trim().length === 0) {
+      return;
+    }
+
+    const editedDescriptionInput = window.prompt(
+      'Nova descricao da tarefa (opcional):',
+      task.description ?? '',
+    );
+
+    if (editedDescriptionInput === null) {
+      return;
+    }
+
+    void (async () => {
+      try {
+        const updatedTask = await taskService.update(task.id, {
+          title: editedTitle.trim(),
+          description: editedDescriptionInput.trim() || undefined,
+        });
+
+        setError(null);
+        setTasks((previousTasks) =>
+          previousTasks.map((currentTask) =>
+            currentTask.id === task.id ? updatedTask : currentTask,
+          ),
+        );
+      } catch {
+        setError('Erro ao editar tarefa.');
+      }
+    })();
+  }, []);
+
+  const handleCreateTask = useCallback((status: TaskStatus) => {
+    const title = window.prompt('Titulo da tarefa:');
+
+    if (!title || title.trim().length === 0) {
+      return;
+    }
+
+    const description = window.prompt('Descricao da tarefa (opcional):') ?? undefined;
+
+    void (async () => {
+      try {
+        const createdTask = await taskService.create({
+          title: title.trim(),
+          description: description?.trim() || undefined,
+          status,
+        });
+
+        setError(null);
+        setTasks((previousTasks) => [...previousTasks, createdTask]);
+      } catch {
+        setError('Erro ao criar tarefa.');
+      }
+    })();
   }, []);
 
   const handleDeleteTask = useCallback((id: string) => {
-    console.log('Excluir tarefa com ID:', id);
+    void (async () => {
+      try {
+        await taskService.remove(id);
+        setTasks((previousTasks) => previousTasks.filter((task) => task.id !== id));
+      } catch {
+        setError('Erro ao excluir tarefa.');
+      }
+    })();
   }, []);
 
   const handleMoveTask = useCallback((id: string, newStatus: TaskStatus) => {
-    setTasks((previousTasks) =>
-      previousTasks.map((task) => (task.id === id ? { ...task, status: newStatus } : task)),
-    );
+    void (async () => {
+      try {
+        const updatedTask = await taskService.update(id, { status: newStatus });
+
+        setTasks((previousTasks) =>
+          previousTasks.map((task) => (task.id === id ? updatedTask : task)),
+        );
+      } catch {
+        setError('Erro ao atualizar status da tarefa.');
+      }
+    })();
   }, []);
 
   if (loading) {
@@ -100,6 +167,7 @@ export const App = () => {
             title={status}
             tone={COLUMN_STYLES[status]}
             tasks={tasksByStatus[status]}
+            onCreateTask={handleCreateTask}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
             onMoveTask={handleMoveTask}
