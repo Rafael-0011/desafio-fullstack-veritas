@@ -80,6 +80,22 @@
   color: #1e293b;
 }
 
+.column-create-button {
+  border: 1px dashed #93a6c5;
+  background: rgba(255, 255, 255, 0.55);
+  color: #1e3a5f;
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+
+.column-create-button:hover {
+  background: rgba(255, 255, 255, 0.72);
+}
+
 .task-list {
   flex: 1;
   overflow-y: auto;
