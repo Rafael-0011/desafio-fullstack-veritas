@@ -23,7 +23,7 @@ export const App = () => {
       const apiTasks = await taskService.getAll();
       setTasks(apiTasks);
     } catch {
-      setError('Erro ao carregar tarefas. Verifique se o backend está em execução na porta 3000.');
+      setError('Erro ao carregar tarefas. Verifique se o backend está em execução na porta 8080.');
     } finally {
       setLoading(false);
     }
