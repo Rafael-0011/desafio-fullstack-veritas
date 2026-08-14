@@ -11,7 +11,7 @@ RUN npm install
 COPY . .
 
 # Argumento para injetar a URL da API no build do Vite
-ARG VITE_API_URL=http://localhost:8080
+ARG VITE_API_URL=http://localhost:3000
 ENV VITE_API_URL=$VITE_API_URL
 
 # Execução do build de produção

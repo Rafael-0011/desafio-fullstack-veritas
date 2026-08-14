@@ -1,7 +1,7 @@
 import type { Task } from '../model/Task';
 import { TASK_STATUSES, type TaskStatus } from '../model/TaskStatus';
 
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '');
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8080').replace(/\/$/, '');
 const TASKS_ENDPOINT = `${API_URL}/tasks`;
 
 const VALID_STATUSES = new Set<string>(TASK_STATUSES);

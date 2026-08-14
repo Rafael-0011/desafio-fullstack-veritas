@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 )
 
 // enableCORS configura os cabeçalhos de Cross-Origin Resource Sharing
@@ -56,7 +58,14 @@ func main() {
 	// Aplicação da cadeia de middlewares (CORS + Logging)
 	handlerWithMiddlewares := loggingMiddleware(enableCORS(mux))
 
-	port := ":3000"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	if !strings.HasPrefix(port, ":") {
+		port = ":" + port
+	}
+
 	fmt.Println("==================================================")
 	fmt.Println("🚀 Mini Kanban Backend (Veritas) - Servidor Iniciado")
 	fmt.Printf("📍 Escutando em: http://localhost%s\n", port)

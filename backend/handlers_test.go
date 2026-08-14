@@ -115,12 +115,12 @@ func TestFullTaskLifecycleAndValidations(t *testing.T) {
 
 	// 10. Test CORS Preflight OPTIONS
 	req, _ = http.NewRequest(http.MethodOptions, server.URL+"/tasks", nil)
-	req.Header.Set("Origin", "http://localhost:5173")
+	req.Header.Set("Origin", "http://localhost:3000")
 	resp, _ = http.DefaultClient.Do(req)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("esperava 200 no OPTIONS CORS, obteve %d", resp.StatusCode)
 	}
-	if resp.Header.Get("Access-Control-Allow-Origin") != "http://localhost:5173" {
+	if resp.Header.Get("Access-Control-Allow-Origin") != "http://localhost:3000" {
 		t.Fatalf("cabeçalho CORS Allow-Origin incorreto: %s", resp.Header.Get("Access-Control-Allow-Origin"))
 	}
 
