@@ -16,40 +16,22 @@ export const App = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadTasks = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        if (!isMounted) {
-          return;
-        }
-
-        const apiTasks = await taskService.getAll();
-
-        if (isMounted) {
-          setTasks(apiTasks);
-        }
-      } catch {
-        if (isMounted) {
-          setError('Erro ao carregar tarefas.');
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadTasks();
-
-    return () => {
-      isMounted = false;
-    };
+  const fetchTasks = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const apiTasks = await taskService.getAll();
+      setTasks(apiTasks);
+    } catch {
+      setError('Erro ao carregar tarefas. Verifique se o backend está em execução na porta 3000.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   const tasksByStatus = useMemo<Record<TaskStatus, Task[]>>(
     () => ({
@@ -61,14 +43,14 @@ export const App = () => {
   );
 
   const handleEditTask = useCallback((task: Task) => {
-    const editedTitle = window.prompt('Novo titulo da tarefa:', task.title);
+    const editedTitle = window.prompt('Novo título da tarefa:', task.title);
 
     if (!editedTitle || editedTitle.trim().length === 0) {
       return;
     }
 
     const editedDescriptionInput = window.prompt(
-      'Nova descricao da tarefa (opcional):',
+      'Nova descrição da tarefa (opcional):',
       task.description ?? '',
     );
 
@@ -81,6 +63,7 @@ export const App = () => {
         const updatedTask = await taskService.update(task.id, {
           title: editedTitle.trim(),
           description: editedDescriptionInput.trim() || undefined,
+          status: task.status,
         });
 
         setError(null);
@@ -96,13 +79,13 @@ export const App = () => {
   }, []);
 
   const handleCreateTask = useCallback((status: TaskStatus) => {
-    const title = window.prompt('Titulo da tarefa:');
+    const title = window.prompt('Título da tarefa:');
 
     if (!title || title.trim().length === 0) {
       return;
     }
 
-    const description = window.prompt('Descricao da tarefa (opcional):') ?? undefined;
+    const description = window.prompt('Descrição da tarefa (opcional):') ?? undefined;
 
     void (async () => {
       try {
@@ -124,6 +107,7 @@ export const App = () => {
     void (async () => {
       try {
         await taskService.remove(id);
+        setError(null);
         setTasks((previousTasks) => previousTasks.filter((task) => task.id !== id));
       } catch {
         setError('Erro ao excluir tarefa.');
@@ -135,7 +119,7 @@ export const App = () => {
     void (async () => {
       try {
         const updatedTask = await taskService.update(id, { status: newStatus });
-
+        setError(null);
         setTasks((previousTasks) =>
           previousTasks.map((task) => (task.id === id ? updatedTask : task)),
         );
@@ -146,11 +130,23 @@ export const App = () => {
   }, []);
 
   if (loading) {
-    return <div className="board-state">Carregando Kanban...</div>;
+    return (
+      <div className="board-state">
+        <div className="loading-spinner" />
+        <p>Carregando Kanban...</p>
+      </div>
+    );
   }
 
-  if (error) {
-    return <div className="board-state error-message">{error}</div>;
+  if (error && tasks.length === 0) {
+    return (
+      <div className="board-state error-message">
+        <p>{error}</p>
+        <button type="button" className="retry-button" onClick={fetchTasks}>
+          Tentar novamente
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -159,6 +155,15 @@ export const App = () => {
         <h1>Veritas Kanban</h1>
         <p>Quadro com 3 colunas fixas para o CRUD de tarefas.</p>
       </header>
+
+      {error && (
+        <div className="error-banner">
+          <span>{error}</span>
+          <button type="button" className="error-banner-close" onClick={() => setError(null)}>
+            ×
+          </button>
+        </div>
+      )}
 
       <div className="kanban-board">
         {TASK_STATUSES.map((status) => (

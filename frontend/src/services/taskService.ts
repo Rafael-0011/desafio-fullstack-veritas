@@ -28,13 +28,13 @@ export type UpdateTaskInput = {
 
 const toTask = (dto: TaskDTO): Task => {
 	if (!VALID_STATUSES.has(dto.status)) {
-		throw new Error(`Status invalido recebido da API: ${dto.status}`);
+		throw new Error(`Status inválido recebido da API: ${dto.status}`);
 	}
 
 	return {
 		id: dto.id,
 		title: dto.title,
-		description: dto.description ?? undefined,
+		description: dto.description?.trim() || undefined,
 		status: dto.status as TaskStatus,
 		createdAt: dto.createdAt ? new Date(dto.createdAt) : undefined,
 	};
