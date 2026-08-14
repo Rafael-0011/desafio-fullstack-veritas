@@ -13,17 +13,34 @@ export const Card = ({ task, onEdit, onDelete, onStatusChange }: CardProps) => {
   const selectId = `task-status-${task.id}`;
 
   const handleStatusChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    event.stopPropagation();
     onStatusChange(task.id, event.target.value as TaskStatus);
   };
 
   return (
-    <div className="card-trello-style">
+    <div
+      className="card-trello-style"
+      role="button"
+      tabIndex={0}
+      onClick={() => onEdit(task)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onEdit(task);
+        }
+      }}
+    >
       <h3 className="card-title">{task.title}</h3>
       {task.description && <p>{task.description}</p>}
 
-      <div className="status-selector">
+      <div className="status-selector" onClick={(e) => e.stopPropagation()}>
         <label htmlFor={selectId}>Status</label>
-        <select id={selectId} value={task.status} onChange={handleStatusChange}>
+        <select
+          id={selectId}
+          value={task.status}
+          onChange={handleStatusChange}
+          onClick={(e) => e.stopPropagation()}
+        >
           {TASK_STATUSES.map((status) => (
             <option key={status} value={status}>
               {status}
@@ -32,11 +49,24 @@ export const Card = ({ task, onEdit, onDelete, onStatusChange }: CardProps) => {
         </select>
       </div>
 
-      <div className="actions">
-        <button type="button" onClick={() => onEdit(task)}>
+      <div className="actions" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(task);
+          }}
+        >
           Editar
         </button>
-        <button type="button" className="danger" onClick={() => onDelete(task.id)}>
+        <button
+          type="button"
+          className="danger"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(task.id);
+          }}
+        >
           Excluir
         </button>
       </div>
